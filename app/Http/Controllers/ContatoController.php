@@ -61,7 +61,12 @@ class ContatoController extends Controller
      */
     public function update(Request $request, Contato $contato)
     {
-        //
+        try {
+            $contato->update($request->all());
+            return Response('Contato Atualizado com sucesso', 200);
+        } catch (\Throwable $th) {
+            return Response('Erro ao Atualizar contato', 400);
+        }
     }
 
     /**
@@ -72,6 +77,11 @@ class ContatoController extends Controller
      */
     public function destroy(Contato $contato)
     {
-        //
+        try {
+            $contato->delete();
+            return Response('Contato excluido com sucesso', 200);
+        } catch (\Throwable $th) {
+            return Response('Erro ao excluir contato', 400);
+        }
     }
 }

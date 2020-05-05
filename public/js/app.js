@@ -1970,6 +1970,15 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ __webpack_exports__["default"] = ({
   data: function data() {
@@ -1978,34 +1987,80 @@ __webpack_require__.r(__webpack_exports__);
         id: null,
         nome: '',
         telefone: ''
-      })
+      }),
+      contatosCompleto: []
     };
+  },
+  mounted: function mounted() {
+    this.listarContatos();
   },
   methods: {
     salvar: function salvar() {
       var _this = this;
 
-      this.form.post('/contato').then(function (_ref) {
-        var data = _ref.data;
+      if (this.form.id) {
+        this.form.put('/contato/' + this.form.id).then(function (_ref) {
+          var data = _ref.data;
 
-        _this.LimparForm();
+          _this.LimparForm();
 
-        _this.$swal({
-          icon: 'success',
-          text: 'Contato salvo com sucesso'
+          _this.listarContatos();
+
+          _this.$swal({
+            icon: 'success',
+            text: 'Contato atualizado com sucesso'
+          });
+        })["catch"](function (err) {
+          _this.$swal({
+            icon: 'error',
+            text: 'Erro ao Atualizar contato'
+          });
         });
-      })["catch"](function (err) {
-        _this.$swal({
-          icon: 'error',
-          text: 'Erro ao salvar contato'
+      } else {
+        this.form.post('/contato').then(function (_ref2) {
+          var data = _ref2.data;
+
+          _this.LimparForm();
+
+          _this.listarContatos();
+
+          _this.$swal({
+            icon: 'success',
+            text: 'Contato salvo com sucesso'
+          });
+        })["catch"](function (err) {
+          _this.$swal({
+            icon: 'error',
+            text: 'Erro ao salvar contato'
+          });
         });
-      });
+      }
     },
     LimparForm: function LimparForm() {
       this.form = new vform__WEBPACK_IMPORTED_MODULE_0__["Form"]({
         id: null,
         nome: '',
         telefone: ''
+      });
+    },
+    listarContatos: function listarContatos() {
+      var _this2 = this;
+
+      axios.get('/contato').then(function (_ref3) {
+        var data = _ref3.data;
+        _this2.contatosCompleto = data;
+      })["catch"](function (err) {
+        _this2.$swal({
+          icon: 'error',
+          text: 'Erro ao encontrar contato'
+        });
+      });
+    },
+    selecionarContato: function selecionarContato(contato) {
+      this.form = new vform__WEBPACK_IMPORTED_MODULE_0__["Form"]({
+        id: contato.id,
+        nome: contato.nome,
+        telefone: contato.telefone
       });
     }
   }
@@ -2048,24 +2103,44 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
 /* harmony default export */ __webpack_exports__["default"] = ({
-  data: function data() {
-    return {
-      contatos: []
-    };
-  },
-  mounted: function mounted() {
-    var _this = this;
+  props: ['contatos'],
+  methods: {
+    excluir: function excluir(contato) {
+      var _this = this;
 
-    axios.get('/contato').then(function (_ref) {
-      var data = _ref.data;
-      _this.contatos = data;
-    })["catch"](function (err) {
-      _this.$swal({
-        icon: 'error',
-        text: 'Erro ao encontrar contato'
+      this.$swal({
+        title: 'Atenção',
+        text: 'Deseja mesmo excluir este contato?',
+        showCancelButton: true,
+        confirmButtonText: 'Sim',
+        cancelButtonText: 'Não',
+        confirmButtonColor: '#e3342f',
+        cancelButtonColor: '#3490dc'
+      }).then(function (result) {
+        if (result.value) {
+          axios["delete"]('/contato/' + contato.id).then(function (_ref) {
+            var data = _ref.data;
+
+            _this.$emit('listar-contatos');
+
+            _this.$swal('Deletado!', 'Contato deletado com sucesso', 'success');
+          })["catch"](function (err) {
+            _this.$swal({
+              icon: 'error',
+              text: 'Erro ao excluir contato'
+            });
+          });
+        }
       });
-    });
+    },
+    editContato: function editContato(contato) {
+      this.$emit('selecionar-contato', contato);
+    }
   }
 });
 
@@ -42635,18 +42710,48 @@ var render = function() {
             _c(
               "button",
               {
-                staticClass: "btn btn-primary",
+                staticClass: "btn btn-success",
                 attrs: { disabled: _vm.form.busy, type: "submit" }
               },
               [_vm._v("Salvar")]
-            )
+            ),
+            _vm._v(" "),
+            _vm._m(0)
           ]
         )
       ])
+    ]),
+    _vm._v(" "),
+    _c("div", { staticClass: "row mt-3" }, [
+      _c(
+        "div",
+        { staticClass: "col-md-12" },
+        [
+          _c("table-contato", {
+            attrs: { contatos: _vm.contatosCompleto },
+            on: {
+              "listar-contatos": _vm.listarContatos,
+              "selecionar-contato": _vm.selecionarContato
+            }
+          })
+        ],
+        1
+      )
     ])
   ])
 }
-var staticRenderFns = []
+var staticRenderFns = [
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c(
+      "button",
+      { staticClass: "btn btn-primary", attrs: { type: "reset" } },
+      [_c("i", { staticClass: "fa fa-undo" })]
+    )
+  }
+]
 render._withStripped = true
 
 
@@ -42683,7 +42788,35 @@ var render = function() {
               _vm._v(" "),
               _c("td", [_vm._v(_vm._s(c.nome))]),
               _vm._v(" "),
-              _c("td", [_vm._v(_vm._s(c.Telefone))])
+              _c("td", [_vm._v(_vm._s(c.telefone))]),
+              _vm._v(" "),
+              _c("td", [
+                _c(
+                  "button",
+                  {
+                    staticClass: "btn btn-sm btn-primary",
+                    on: {
+                      click: function($event) {
+                        return _vm.editContato(c)
+                      }
+                    }
+                  },
+                  [_vm._v("Editar")]
+                ),
+                _vm._v(" "),
+                _c(
+                  "button",
+                  {
+                    staticClass: "btn btn-sm btn-danger",
+                    on: {
+                      click: function($event) {
+                        return _vm.excluir(c)
+                      }
+                    }
+                  },
+                  [_vm._v("Excluir")]
+                )
+              ])
             ])
           }),
           0
@@ -42705,7 +42838,7 @@ var staticRenderFns = [
         _vm._v(" "),
         _c("th", [_vm._v("Telefone")]),
         _vm._v(" "),
-        _c("th", [_vm._v("Acoe")])
+        _c("th", [_vm._v("Açõe")])
       ])
     ])
   }
@@ -55169,14 +55302,15 @@ __webpack_require__.r(__webpack_exports__);
 /*!**********************************************************!*\
   !*** ./resources/js/components/contato/TableContato.vue ***!
   \**********************************************************/
-/*! exports provided: default */
+/*! no static exports found */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _TableContato_vue_vue_type_template_id_64e2b2a8___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./TableContato.vue?vue&type=template&id=64e2b2a8& */ "./resources/js/components/contato/TableContato.vue?vue&type=template&id=64e2b2a8&");
 /* harmony import */ var _TableContato_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./TableContato.vue?vue&type=script&lang=js& */ "./resources/js/components/contato/TableContato.vue?vue&type=script&lang=js&");
-/* empty/unused harmony star reexport *//* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+/* harmony reexport (unknown) */ for(var __WEBPACK_IMPORT_KEY__ in _TableContato_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__) if(__WEBPACK_IMPORT_KEY__ !== 'default') (function(key) { __webpack_require__.d(__webpack_exports__, key, function() { return _TableContato_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__[key]; }) }(__WEBPACK_IMPORT_KEY__));
+/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
 
 
 
@@ -55206,7 +55340,7 @@ component.options.__file = "resources/js/components/contato/TableContato.vue"
 /*!***********************************************************************************!*\
   !*** ./resources/js/components/contato/TableContato.vue?vue&type=script&lang=js& ***!
   \***********************************************************************************/
-/*! exports provided: default */
+/*! no static exports found */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";

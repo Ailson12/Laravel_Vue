@@ -18,10 +18,19 @@
                             class="form-control" :class="{ 'is-invalid': form.errors.has('telefone') }">
                         <has-error :form="form" field="telefone"></has-error>
                     </div>
-                    <button :disabled="form.busy" type="submit" class="btn btn-primary">Salvar</button>
+                    <button :disabled="form.busy" type="submit" class="btn btn-success">Salvar</button>
+                    <button type="reset" class="btn btn-primary"><i class="fa fa-undo"></i></button>
                 </form>
             </div>
         </div>
+         <div class="row mt-3">
+                    <div class="col-md-12">
+                        <table-contato 
+                        :contatos="contatosCompleto" 
+                        @listar-contatos="listarContatos"
+                        @selecionar-contato="selecionarContato"></table-contato>
+                    </div>
+                </div>
     </div>
 </template>
 
@@ -34,17 +43,40 @@ export default {
                 id: null,
                 nome: '',
                 telefone: '',
-            })
+            }),
+            contatosCompleto: [],
         }
+    },
+
+    mounted(){
+       this.listarContatos()
     },
     methods: {
         salvar(){
+            if (this.form.id) {
+                this.form.put('/contato/' + this.form.id)
+                .then(({ data }) => {
+                    this.LimparForm()
+                    this.listarContatos()
+                    this.$swal({
+                        icon: 'success',
+                        text: 'Contato atualizado com sucesso'
+                    });
+                })
+                .catch(err => {
+                    this.$swal({
+                        icon: 'error',
+                        text: 'Erro ao Atualizar contato'
+                    });
+                })   
+            } else {
              this.form.post('/contato')
                 .then(({ data }) => {
                     this.LimparForm()
+                    this.listarContatos()
                     this.$swal({
                         icon: 'success',
-                        text: 'Contato salvo com sucesso'
+                        text: 'Contato salvo com sucesso',
                     });
                 })
                 .catch(err => {
@@ -52,7 +84,8 @@ export default {
                         icon: 'error',
                         text: 'Erro ao salvar contato'
                     });
-                })
+                })   
+            }
         },
 
         LimparForm() {
@@ -60,6 +93,25 @@ export default {
                 id: null,
                 nome: '',
                 telefone: '',
+            })
+        },
+        listarContatos(){
+            axios.get('/contato')
+                .then(({ data }) => {
+                    this.contatosCompleto =  data
+                })
+                .catch(err => {
+                    this.$swal({
+                        icon: 'error',
+                        text: 'Erro ao encontrar contato'
+                    });
+                })
+        },
+        selecionarContato(contato){
+            this.form = new Form({
+                id: contato.id,
+                nome: contato.nome,
+                telefone: contato.telefone,
             })
         }
     }
